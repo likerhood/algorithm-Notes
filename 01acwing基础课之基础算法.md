@@ -581,11 +581,135 @@ int main(){
 ```
 
 ### 二维前缀和
+给一个二维矩阵，可以以O(1)的时间求出子矩阵的总数和。原理和一维前缀和类似，都是需要预先求出总的前缀和，然后根据坐标的加减来求出子矩阵的前缀和。
+![alt text](img/image-16.png)
+```
+S[i, j] = 第i行j列格子左上部分所有元素的和
+以(x1, y1)为左上角，(x2, y2)为右下角的子矩阵的和为：
+S[x2, y2] - S[x1 - 1, y2] - S[x2, y1 - 1] + S[x1 - 1, y1 - 1]
+```
 
+>[二维前缀和例题](https://www.acwing.com/problem/content/798/)
+>![alt text](img/image-17.png)
 
+代码模板：
+```c++
+#include<bits/stdc++.h>
+using namespace std;
+
+const int N = 1005;
+int n, m, q;
+int a[N][N], s[N][N];
+int main(){
+    cin >> n >> m >> q;
+    for(int i = 1; i <= n; i++){
+        for(int j = 1; j <= m; j++){
+            cin >> a[i][j];
+            s[i][j] = s[i - 1][j] + s[i][j - 1] - s[i - 1][j - 1] + a[i][j];
+        }
+    }
+
+    while(q--){
+        int x1, y1, x2, y2;
+        cin >> x1 >> y1 >> x2 >> y2;
+        int sum = s[x2][y2] - s[x1 - 1][y2] - s[x2][y1 - 1] + s[x1 - 1][y1 -1];
+        cout << sum << endl;
+    }
+    return 0;
+}
+```
 
 ## 6. 差分
 ### 一维差分
+差分是前缀和的逆运算。
+>![alt text](img/image-18.png)
+>![alt text](img/image-19.png)
+>![alt text](img/image-20.png)
+>转载自 [林小鹿博客](https://www.acwing.com/solution/content/26588/)
 
+综上所述：差分是前缀和的逆运算，通过操作差分数组可以用O(1)的时间改变原序列中一段子序列的值。
+
+> [一维差分例题](https://www.acwing.com/problem/content/799/)
+> ![alt text](img/image-21.png)
+
+代码模板：
+```c++
+#include<bits/stdc++.h>
+using namespace std;
+
+const int N = 100005;
+int n, m;
+int a[N], b[N];
+int main(){
+    cin >> n >> m;
+    for(int i = 1; i <= n; i++){
+        cin >> a[i];
+        b[i] = a[i] - a[i - 1];
+    }
+
+    while(m--){
+        int l, r, c;
+        cin >> l >> r >> c;
+        b[l] += c;
+        b[r + 1] -= c;
+    }
+
+    for(int i = 1; i <= n; i++){
+        a[i] = a[i - 1] + b[i];
+        cout << a[i] << ' ';
+    }
+    return 0;
+}
+```
 
 ### 二维差分
+差分是前缀和的逆运算。
+> [二维差分讲解博客](https://www.acwing.com/solution/content/27325/)
+> ![alt text](img/image-22.png)
+
+> [二维差分例题](https://www.acwing.com/problem/content/800/)
+> ![alt text](img/image-23.png)
+> ![alt text](img/image-24.png)
+
+代码模板：
+```c++
+#include<bits/stdc++.h>
+using namespace std;
+
+const int N = 1005;
+int n, m, q;
+int a[N][N], b[N][N];
+
+void track(int x1, int y1, int x2, int y2, int c){
+    b[x1][y1] += c;
+    b[x1][y2 + 1] -= c;
+    b[x2 + 1][y1] -= c;
+    b[x2 + 1][y2 + 1] += c;
+}
+
+int main(){
+    cin >> n >> m >> q;
+    for(int i = 1; i <= n; i++){
+        for(int j = 1; j <= m; j++){
+            cin >> a[i][j];
+            track(i, j, i, j, a[i][j]);
+        }
+    }
+
+    while(q--){
+        int x1, y1, x2, y2, c;
+        cin >> x1 >> y1 >> x2 >> y2 >> c;
+        track(x1, y1, x2, y2, c);
+    }
+
+    for(int i = 1; i <= n; i++){
+        for(int j = 1; j <= m; j++){
+            a[i][j] = a[i - 1][j] + a[i][j - 1] - a[i - 1][j - 1] + b[i][j];
+            cout << a[i][j] <<' ';
+        }
+        cout << endl;
+
+    }
+    return 0;
+}
+```
