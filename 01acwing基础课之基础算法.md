@@ -713,3 +713,308 @@ int main(){
     return 0;
 }
 ```
+
+## 7. 双指针
+双指针算法通常是用前后两个指针动态变化维护某个区间。类型大致分为两指针同向移动和相向移动。例如前面提到的快速排序和归并排序等就用到了双指针。
+
+**双指针模板**
+```c++
+for (int i = 0, j = 0; i < n; i ++ )
+{
+    while (j < i && check(i, j)) j ++ ;
+
+    // 具体问题的逻辑
+}
+常见问题分类：
+    (1) 对于一个序列，用两个指针维护一段区间
+    (2) 对于两个序列，维护某种次序，比如归并排序中合并两个有序序列的操作
+```
+
+**题目一**
+>[最长连续不重复子序列](https://www.acwing.com/problem/content/801/)
+>![alt text](img/image-25.png)
+
+代码模板：
+```c++
+#include<bits/stdc++.h>
+using namespace std;
+
+const int N = 100005;
+int n, a[N], b[N];
+
+int main(){
+    cin >> n;
+    for(int i = 0; i < n; i++)  cin >> a[i];
+    
+    int cnt = 0;
+    for(int i = 0, j = 0; j < n; j++){
+        b[a[j]]++;
+        while(b[a[j]] > 1){
+            b[a[i]]--;
+            i++;
+        }
+        
+        cnt = max(cnt, j - i + 1);
+    }
+    
+    cout << cnt << endl;
+    return 0;
+}
+```
+
+**题目二**
+>[数组元素的目标和](https://www.acwing.com/problem/content/description/802/)
+>![alt text](img/image-26.png)
+
+思路很多。两层循环暴力求解也是可以的。如果这里两个数组不是有序序列，使用hash表也很方便。考虑到是双指针，可以考虑对一个数组用二分查找目标数，时间复杂度应该是O(n*logm)。
+
+但是考虑到单调性，我们发现如果一个序列的首指针和另一个序列的尾指针相向而行，可以保证两数之和具有一定性质：`a[i] + b[j] > target`。通过移动双指针来维护这个性质。直到找到`a[i] + b[j] == target`返回答案。
+
+代码模板：
+```c++
+#include<bits/stdc++.h>
+
+using namespace std;
+
+const int N = 100010;
+int n, m, x;
+int a[N], b[N];
+
+int main(){
+    cin >> n >> m >> x;
+    for(int i = 0; i < n; i++)  cin >> a[i];
+    for(int i = 0; i < m; i++)  cin >> b[i];
+    
+    for(int i = 0, j = m - 1; i < n; i++){
+        while(j >= 0 && a[i] + b[j] > x){
+            j--;
+        }
+        if(a[i] + b[j] == x){
+            cout << i << ' ' << j << endl;
+            break;
+        }
+    }
+    
+    return 0;
+}
+```
+
+**题目三**
+>[判断子序列](https://www.acwing.com/problem/content/2818/)
+>![alt text](img/image-27.png)
+
+代码模板：
+```c++
+#include<bits/stdc++.h>
+using namespace std;
+
+const int N = 100010;
+int n, m;
+int a[N], b[N];
+
+int main(){
+    cin >> n >> m;
+    for(int i = 0; i < n; i++)  cin >> a[i];
+    for(int i = 0; i < m; i++)  cin >> b[i];
+
+    int i, j;
+    for(i = 0, j = 0; i < n; i++, j++){
+        while(j < m && a[i] != b[j]){
+            j++;
+        }
+        if(j == m){
+            cout << "No" <<endl;
+            break;
+        }
+    }
+    if(i == n)  cout << "Yes" << endl;
+
+    return 0;
+}
+```
+
+## 8. 位运算
+几个常见位运算。
+
+**左移：** `x >> 1`,左移一位，相当于除以2：左移几位相当于高位补零，低位抛弃；
+
+**右移：** `x << 1`,右移一位，相当于乘以2：右移几位相当于高位舍弃，低位补零；
+
+**求n的第k位数字：** `n >> k & 1`,这里是将n右移k位，然后剩余位数取零。（ps：k是从0开始）
+
+**返回n的最后一位1:** `lowbit(n) = n & -n`。在计算机内部，一个数的负数是取它的补码。补码是将其取反加一。这里lowbit(n)是将n的最后一位1对应的数字大小返回。
+![alt text](img/image-28.png)
+
+>[位运算例题](https://www.acwing.com/problem/content/description/803/)
+>![alt text](img/image-29.png)
+
+思路：通过位运算，以O(1)的速度求出n二进制的最后一位1对应的数值，然后再一个循环内减去该数，求出一共进行的次数，即可求出数字一个数的二进制中有多少个1.
+
+代码模板：
+```c++
+#include<bits/stdc++.h>
+using namespace std;
+
+const int N = 100010;
+int n, a[N];
+int lowbit(int n){
+    return n & (-n);
+}
+int main(){
+
+    cin >> n;
+    for(int i = 0; i < n; i++){
+        cin >> a[i];
+    }
+
+    for(int i = 0; i < n; i++){
+        int cnt = 0;
+        while(a[i]){
+            a[i] -= lowbit(a[i]);
+            cnt++;
+        }
+        cout << cnt << ' ';
+    }
+    return 0;
+}
+```
+
+## 9. 离散化
+什么是离散化？为什么要离散化？
+
+一组数据的值域比较大，个数比较少【一般l和 r较小的话,比如<=10^5,用前缀和】。我们需要求出这组数据的某个区间的和。所以为了处理值域和数据个数的冲突，必须要进行离散化——**类似hash的思想将数据的数值和数组下标对应起来。**
+
+接下来直接通过一个例题来理解离散化。
+>[离散化例题](https://www.acwing.com/problem/content/description/804/)
+>![alt text](img/image-30.png)
+>![alt text](img/image-31.png)
+
+利益注意到这里的`x`对应的数值范围很大，要求出某段关于`x`的区间的和，很难用数组下标连续表示出来。同时`x`的个数并不多，可以用数组放下。所以我们根据hash的思想，将数组下标和`x`的数值对应，之后求关于`x`的每一段区间和，首先将`x`转换为数组下标，然后再求取这一段下标对应的区间和（前缀和实现）。
+![alt text](img/image-32.png)
+
+代码模板:
+```c++
+#include<bits/stdc++.h>
+using namespace std;
+
+typedef pair<int, int> PII;
+const int N = 300010;
+int n, m;
+int sum[N]; //sum表示i对应的x坐标的前缀和
+int a[N];   // a[i]表示i下标对应的x坐标对应的值
+vector<int> alls;   // 存放排序好的x坐标
+vector<PII > add, query;    // 存放对应x插入的数值和查询的区间范围
+
+int main(){
+
+    // 先输入数据
+    cin >> n >> m;
+    for(int i = 0; i < n; i++){
+        int x, c;
+        cin >> x >> c;
+        alls.push_back(x);
+        add.push_back({x, c});
+    }
+
+    for(int i = 0; i < m; i++){
+        int l, r;
+        cin >> l >> r;
+        query.push_back({l, r});
+        alls.push_back(l);
+        alls.push_back(r);
+    }
+
+    // 在alls数组中进行排列和去重
+    sort(alls.begin(), alls.end());
+    alls.erase(unique(alls.begin(), alls.end()), alls.end());
+    // unique函数的原理：使得只出现一次的数在一个区域，
+    //剩余的有重复的接在第一个end(最后未重复出现的位置的下标)的后面，
+    //再把其与第二个end之间(数组末尾)的值erase
+
+    // 获得x数值和数组下标的映射
+    unordered_map<int, int> mp;
+    for(int i = 0; i < alls.size(); i++){
+        mp[alls[i]] = i + 1;
+    }
+
+    // 开始对x坐标进行插值处理
+    for(int i = 0; i < add.size(); i++){
+        int index = mp[add[i].first];
+        a[index] += add[i].second;
+    }
+
+    // 计算前缀和
+    for(int i = 1; i <= alls.size(); i++){
+        sum[i] = sum[i - 1] + a[i];
+    }
+
+    // 给出每段查询区间的值
+    for(int i = 0; i < m; i++){
+        int l = mp[query[i].first];
+        int r = mp[query[i].second];
+        int s = sum[r] - sum[l - 1];
+
+        cout << s << endl;
+    }
+
+    return 0;
+}
+```
+
+## 10. 区间合并
+区间合并，典型的贪心问题，思维难度不大，但是模拟的过程如何用代码实现才是一个比较难的问题。计算合并之后的区间个数，我们需要用一个容器存储合并的区间，同时也需要一个两个指针来维护合并时的区间。在算法处理的时候，首先需要对区间进行排序，然后将判断每个区间的左右端点进行合并。当上一个区间的右端点小于下一个区间的左端点时，将记录上一个区间，然后更新维护区间的指针。当上一个区间的右端点和和下一个区间有交集，更新右端点。
+
+>[区间合并例题](https://www.acwing.com/problem/content/805/)
+>![alt text](img/image-33.png)
+
+```c++
+#include<bits/stdc++.h>
+using namespace std;
+
+typedef pair<int, int> PII;
+vector<PII > segs, res;
+
+void merge(){
+    int st = INT_MIN, ed = INT_MIN;
+    for(int i = 0; i < segs.size(); i++){
+        // 上一个区间的右端点小于下一个区间的左端点
+        if(ed < segs[i].first){
+            if(st != INT_MIN)
+                res.push_back({st, ed});
+            // 更新维护区间的左右端点
+            st = segs[i].first;
+            ed = segs[i].second;
+        }else{
+            // 更新左端点
+            ed = max(ed, segs[i].second);
+        }
+    }
+
+    // 注意加入最后一个区间
+    res.push_back({st, ed});
+}
+
+int main(){
+    int n;
+    cin >> n;
+    for(int i = 0; i < n; i++){
+        int l, r;
+        cin >> l >> r;
+        segs.push_back({l, r});
+    }
+
+    sort(segs.begin(), segs.end());
+
+    merge();
+    cout << res.size();
+    return 0;
+}
+```
+
+
+
+
+
+
+
+
