@@ -11,7 +11,7 @@ void insert(int x){
     int p = 0;
     for(int i = 30; i >= 0; i--){
         int t = x >> i & 1;
-        son[p][t] = ++idx;
+        if(!son[p][t])    son[p][t] = ++idx;
         p = son[p][t];
     }
 }
@@ -40,7 +40,7 @@ int main(){
     int res = 0;
     for(int i = 0; i < n; i++){
         insert(a[i]);           // 插入Trie树
-        res = max(query(a[i]), res);            // 查询a[i]对应的异或值最大的结果
+        res = max(query(a[i]) ^ a[i], res);            // 查询a[i]对应的异或值最大的结果
     }
 
     cout << res << endl;
