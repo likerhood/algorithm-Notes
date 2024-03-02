@@ -183,6 +183,13 @@ git rm example.txt
 git rm -r foldername
 ```
 
+****
+**git mv**
+```c++
+// 重命名文件，将文件SSD300重命名为ssd
+git mv SSD300 ssd
+```
+
 
 
 
