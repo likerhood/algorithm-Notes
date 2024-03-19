@@ -162,3 +162,412 @@ int main(){
 }
 ```
 
+### 2.3 AcWing 5407. 管道
+> [AcWing 5407. 管道](https://www.acwing.com/activity/content/problem/content/9683/) 
+> ![alt text](img/image-15.png)
+
+思路：这里和上面一道题目区别不大。不过有时候想到二分确实不太容易。如果不是那种动态规划的变态题目，出现最值的问题一般解决办法：贪心、二分、某种函数规律、图论的最短路径方式。**而对于二分的题目，通常是根据单调性或者说是寻找区间的分界点区分两端区间。** 那么题目中问到的最早时刻，确实可以根据二分来查找。
+
+但是也有很多问题，如何在判断函数中判断这个时刻满足条件？我首先想到的是差分的思路，能够得到总区间的情况。但是也有思路是通过区间合并来判断的。区间合并的算法复杂度会低一些。
+
+总言之：这里需要理解题目含义，同时确定思路：为什么可以使用二分？这里数据最大有`10^5`，如果不超时时间复杂度需要优化到`O(nlogn)`及以下。
+```
+      在竞赛中，一般算机一秒能运行5 x 10^8次汁算，如果题目給出的时间限制カ1s,那么你选择的算法执行的汁算次数最多应该在10^8量级オ有可能解决这个题目。一般 O(n)的算法能解决的数据范围在n < 10^8。
+
+      O(n *logn)的算法能解决的数据范围在n <= 10^6。
+
+      O(n*sqrt(n) )的算法能解决的数据范围在n < 10^5。
+
+      O(n^2)的算法能解决的数据范围在n<5000。
+
+      O(n^3)的算法能解决的数据范围在n <300。
+
+      O(2^n)的算法能解决的数据范围在n < 25。
+
+      O(n!)的算法能解决的数据范围在n < 11。
+
+```
+
+代码模板：
+```c++
+#include<iostream>
+#include<algorithm>
+using namespace std;
+/*
+输入的第一行包含两个整数 n,len用一个空格分隔，分别表示会打开的阀门数和管道长度。
+接下来 n行每行包含两个整数 Li,Si用一个空格分隔，表示位于第 Li段管道中央的阀门会在 Si时刻打开。
+对于所有评测用例，1≤n≤105，1≤Si，len≤109，1≤Li≤len，Li−1<Li
+*/
+
+typedef pair<int, int> PII;
+typedef long long LL;
+const int N = 100005;
+int n, len;
+PII w[N], q[N];
+
+bool check(int mid){
+
+    // 遍历全部的开水阀口，全部满足条件的开水阀口的线段区间记录下来
+    int idx = 0;
+    for(int i = 0; i < n; i++){
+        if(w[i].second <= mid){
+            int t = mid - w[i].second;
+            int x = max((LL) 1, (LL) w[i].first - t);
+            int y = min((LL) len, (LL) w[i].first + t);
+            q[idx++] = {x, y};
+        }
+    }
+
+    // 开始合并区间
+    sort(q, q + idx);
+    int sd = -10, ed = -10;
+    for(int i = 0; i < idx; i++){
+        if(q[i].first <= ed || q[i].first == ed + 1){
+            if(sd == -10)   sd = q[i].first;
+            ed = max(q[i].second, ed);
+        }else{
+            sd = q[i].first, ed = max(q[i].second, ed);
+        }
+    }
+
+    if(sd == 1 && ed == len)    return true;
+    else                        return false;
+
+
+}
+
+int main(){
+    cin >> n >> len;
+    for(int i = 0; i < n; i++)  cin >> w[i].first >> w[i].second;
+
+    // 二分
+    int l = 1, r = 2e9;
+    while(l < r){
+        int mid = (LL) l + r >> 1;
+        if(check(mid))  r = mid;
+        else            l = mid + 1;
+    }
+
+    cout << l << endl;
+
+    return 0;
+}
+```
+
+
+
+
+
+### 2.4 AcWing 4656. 技能升级
+>[AcWing 4656. 技能升级](https://www.acwing.com/problem/content/4659/)
+>![alt text](img/image-16.png)
+
+思路分析：
+学会自己思考每一种方式并且得出每一种思路的时间复杂度上是否可行是一项十分重要的能力。直到现在我好像才算算法竞赛的入门。
+
+题目给出n个技能和m次技能升级的机会，每个技能升级的攻击力是一个等差数列。n的数据范围到了10的5次方，m次技能升级的数据范围到达了10的9次方。如果是针对n个技能的算法遍历，算法的时间复杂度需要控制在`O(nlogn)`以内，如果要使用m的数据进行算法遍历，时间复杂度需要控制在`O(logm)`以内。这里是需要分析到的。
+
+我原本的思路是直接模拟升级的过程，利用贪心算法每次选择目前升级攻击力最大的技能。如何每次选出当前攻击力最大的技能——可以根据堆的数据结构进行优化，使用`O(logn)`的时间复杂度就可以选出当前升级力度最大的技能。但是m次升级的数据范围达到了10的9次方级别，因此总的时间复杂度是`O(mlogn)`，会超时。不过利用该算法也可以获得50%的分数。代码如下：
+
+
+代码1（TLE）：
+```c++
+#include<iostream>
+#include<algorithm>
+#include<queue>
+using namespace std;
+
+const int N = 1e5+5;
+typedef long long LL;
+typedef pair<int, int> PII;
+priority_queue<PII> que;
+int n, m;
+
+int main(){
+
+    cin >> n >> m;
+    for(int i = 0; i < n; i++){
+        int x, y;
+        cin >> x >> y;
+        que.push({x, y});
+    }
+
+    LL sum = 0;
+    while(m--){
+        if(que.empty())
+            break;
+        PII t = que.top();
+        que.pop();
+        sum += t.first;
+        t.first -= t.second;
+        if(!(t.first <= 0))
+            que.push(t);
+    }
+
+    cout << sum << endl;
+
+    return 0;
+}
+```
+
+***
+二分的思路：
+
+二分的思路不太容易想到。由于m的数据范围太大，只能想着是否可以根据n的技能次数进行突破。**分析发现每一个技能每一次升级的攻击力是一个大于0的等差数列，如果我们将全部技能的等差数列的数据按照从大到小的顺序进行排列，选出前m个数据加和，就能得到最大升级力度。** 这里直接排列肯定是不太现实的，因为即使是快速排序，若等差数列至少有m项，那么时间复杂度也到达了`O(mlogm)`，依然会超时。 但是，**如果我们可以求出这个从大到小排列的序列中第m项的数值x是多少，然后根据每个技能代表的等差数列的公差，求出到达x的末项会有多少个数据，就能求出总序列中大于x的数据个数了。** 此刻利用二分就达到完美闭环，而时间复杂度为`O(nlogn)`。
+
+![alt text](img/image-18.png)
+
+这里的题目在实际操作的过程中有很多坑，比如这里的二分算法。看这个图可以知道我们需要求出一个边界，这个边界就是`l`。我们可以确定的首先需要找到临界数，这个临界数对应的序列个数可能会大于m，因此我们的目标是求出第一个大于等于m个数的数。这里符合条件的部分是l来记录。从这个图是可以发现的。因此二分还是需要不断画图分析。
+
+坑点二就是你确定的x并不是所有数列的末项，因为公差不一样，我们之前求出的数列个数是严格大于等于x的，并不是一定会等于x。因此我们需要在求和之前先求出每个等差数列的末项，这里的求法直接根据等差数列公式计算即可。
+
+代码：
+```c++
+#include<iostream>
+#include<algorithm>
+#include<queue>
+using namespace std;
+
+const int N = 100005;
+typedef long long LL;
+int n;
+LL m;
+int A[N], B[N];
+
+bool check(int x){
+    LL res = 0;
+    for(int i = 0; i < n; i++){
+        if(A[i] >= x){
+            res += (A[i] - x) / B[i] + 1;
+        }
+    }
+
+    return res >= m;
+}
+
+int main(){
+    cin >> n >> m;
+    for(int i = 0; i < n; i++){
+        cin >> A[i] >> B[i];
+    }
+
+    int l = 0, r = 1e6 + 1;
+    while(l < r){
+        int mid = (LL) l + r + 1 >> 1;
+        if(check(mid))  l = mid;
+        else            r = mid - 1;
+    }
+
+    LL res = 0, cnt = 0;
+    for(int i = 0; i < n; i++){
+        if(A[i] >= r){
+            int c = (A[i] - r) / B[i] + 1;
+            int ed = A[i] - B[i] * (c - 1);
+            cnt += c;
+            res += (LL) (A[i] + ed) * c / 2;
+        }
+    }
+
+    cout << res - (cnt - m) * r ;
+
+    return 0;
+}
+```
+
+
+### 2.5 AcWing 4956. 冶炼金属
+> [AcWing 4956. 冶炼金属](https://www.acwing.com/problem/content/4959/)
+> ![alt text](img/image-19.png)
+> ![alt text](img/image-20.png)
+
+思路：
+
+典型的二分思想。但是我在这里的二分思路却总是出一点问题。现在回想起来，应该还是没理解二分的本质。二分是需要求出临界区间左端点和右端点。我们首先要根据判断条件和x的关系。想象一下单调函数。这里的单调函数其实不一定是要求序列单调，而是目标函数和x的区间序列是单调关系。我们知道了这里的单调关系之后，就根据你需要的区间来移动l和r。只要知道了移动l和r，就能计算出林界定啊，而不是弄错关系。
+
+
+代码：
+```c++
+#include<iostream>
+#include<algorithm>
+using namespace std;
+
+const int N = 10004;
+int n;
+int A[N], B[N];
+
+// 求最小的答案
+bool check1(int x){
+    for(int i = 0; i < n; i++){
+        int t = A[i] / x;
+        if(t > B[i])    return false;    
+    }
+    return true;
+}
+
+// 求最大的答案
+bool check2(int x){
+    for(int i = 0; i < n; i++){
+        int t = A[i] / x;
+        if(t < B[i])    return false;
+    }
+    return true;
+}
+
+
+int main(){
+
+    cin >> n;
+    for(int i = 0; i < n; i++)
+        cin >> A[i] >> B[i];
+    
+    int l = 1, r = 1e9;
+    int res1 = 0, res2 = 0;
+    while(l < r){
+        int mid = l + r >> 1;
+        if(check1(mid))
+            r = mid;
+        else l = mid + 1;
+    }
+
+    res1 = l;
+
+    l = 1, r = 1e9;
+    while(l < r){
+        int mid = l + r + 1 >> 1;
+        if(check2(mid))
+            l = mid;
+        else    r = mid - 1;
+    }
+    res2 = l;
+
+    cout << res1 << " " << res2;
+    return 0;
+}
+```
+
+
+
+### 2.6 AcWing 789. 数的范围
+> [AcWing 789. 数的范围](https://www.acwing.com/problem/content/791/)
+> ![alt text](img/image-21.png)
+
+代码模板：
+```c++
+#include<iostream>
+#include<algorithm>
+#include<limits.h>
+using namespace std;
+
+const int N = 100005;
+int n, q;
+int e[N];
+
+
+int main(){
+
+    cin >> n >> q;
+    for(int i = 0; i < n; i++)
+        cin >> e[i];
+
+    while(q--){
+        int k;
+        cin >> k;
+
+        int l = 0, r = n - 1;
+        while(l < r){
+            int mid = l + r >> 1;
+            if(e[mid] >= k) r = mid;
+            else            l = mid + 1;
+        }
+        if(e[l] != k){
+            cout << -1 << ' ' << -1 << endl;
+            continue;
+        }  
+
+        int res = l;
+        l = 0, r = n - 1;   
+        while(l < r){
+            int mid = l + r + 1 >> 1;
+            if(e[mid] <= k) l = mid;
+            else            r = mid - 1;
+        }
+
+        cout << res << ' ' << l << endl;
+
+    }
+
+
+    return 0;
+}
+
+```
+
+
+### 2.7 AcWing 102. 最佳牛围栏
+> [AcWing 102. 最佳牛围栏](https://www.acwing.com/problem/content/104/)
+> ![alt text](img/image-22.png)
+
+思路：一道神奇的题目，一开始理解错了题目含义：这里的至少的意思是——要求一段连续的区间，长度应该大于等于f。求出这样区间段的最大平均值是多少。一开始我以为是固定的滑动窗口的最大平均值的大小，只能通过部分案例（骗分够了）。
+
+这里答案的思路是：前缀和+双指针+二分。
+
+首先是二分求平均值。这里的平均值指的是某个窗口的平均值。对于平均值的操作，首先让数组的全部数据减去平均值，我们需要求的是这个序列中是否存在某个区间，他的平均值满足我们二分的条件。那么最值问题就变成了二分中的判定问题。如何判定是否存在一个长度大于等于F的区间，平均值大于等于mid？就是价格序列的全部元素都减去mid，求出序列的前缀和。根据前缀和求区间[L,R]的总值是否大于等于0.如果满足该条件，那么这个平均值是满足条件的，继续二分，直到找到这个平均值的临界点——也就是序列中存在一个长度大于等于F的区间，平均值等于mid。
+
+比较特殊的是这里的平均值是浮点数，因此需要用浮点数的二分来计算。不过浮点数的二分不需要在意出现死循环。
+
+但是如何判断是否存在一个长度大于等于F的区间，平均值大于等于mid？这个判断函数利用前缀和和双指针，将每次判断的时间复杂度控制在`O(n)`内。因此总的时间复杂度就是`O(nlogm)`
+
+代码：
+```c++
+#include<iostream>
+#include<algorithm>
+#include<limits.h>
+#include<queue>
+using namespace std;
+
+const int N = 100005;
+int n, m;
+double e[N], sum[N];
+
+bool check(double x){
+    // 求前缀和
+    for(int i = 1; i <= n; i++){
+        sum[i] = sum[i - 1] + e[i] - x;
+    }
+
+    // 二分求满足条件的区间
+    double minv = 1e9;
+    for(int i = 1, j = m; j <= n; j++, i++){
+        minv = min(minv, sum[i - 1]);
+        if(sum[j] - minv >= 0)  return true;
+    }
+    return false;
+
+}
+
+int main(){
+
+    cin >> n >> m;
+   
+    for(int i = 1; i <= n; i++){
+        cin >> e[i];
+    }
+    
+    // 二分
+    double l = 0, r = 2000;
+    while(r - l > 1e-5){
+        double mid = (l + r) / 2;
+        if(check(mid))  l = mid;
+        else            r = mid;
+    }
+
+    cout << (int) (r * 1000) << endl;
+
+    return 0;
+}
+```
+
+
+
+
+
